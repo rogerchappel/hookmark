@@ -1,0 +1,48 @@
+{
+  "name": "hookmark",
+  "version": "0.1.0",
+  "description": "Local-first Git hook and package-script auditor for safer repo automation review.",
+  "type": "module",
+  "bin": {
+    "hookmark": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/fix-bin-mode.mjs",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test tests/*.test.js",
+    "smoke": "npm run build && bash scripts/smoke.sh",
+    "package:smoke": "npm pack --dry-run",
+    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke"
+  },
+  "keywords": [
+    "git-hooks",
+    "security",
+    "supply-chain",
+    "cli",
+    "npm-scripts",
+    "husky",
+    "lefthook"
+  ],
+  "author": "Roger Chappel",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
