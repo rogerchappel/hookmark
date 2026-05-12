@@ -1,0 +1,7 @@
+{
+  "ignore": ["package.json test"],
+  "allow": [".husky/pre-commit npm test"],
+  "severityOverrides": {
+    "internal-release-dry-run": "medium"
+  }
+}
