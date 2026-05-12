@@ -1,0 +1,8 @@
+pre-push:
+  commands:
+    audit:
+      run: npm audit --production
+release:
+  commands:
+    deploy:
+      run: kubectl apply -f k8s/
