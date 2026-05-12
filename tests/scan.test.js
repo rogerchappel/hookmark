@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { scan } from '../dist/index.js';
 test('safe fixture discovers package scripts', () => {
   const report = scan({ target: 'fixtures/safe', config: {} });
@@ -19,4 +22,13 @@ test('configuration can ignore trusted commands and override severity', () => {
 test('hook managers are discovered', () => {
   assert.equal(scan({ target: 'fixtures/husky', config: {} }).findings.some((f) => f.source === 'husky'), true);
   assert.equal(scan({ target: 'fixtures/lefthook', config: {} }).findings.some((f) => f.source === 'lefthook'), true);
+});
+
+test('native .git hooks are discovered from a real hook directory', () => {
+  const target = mkdtempSync(join(tmpdir(), 'hookmark-git-hooks-'));
+  const hooks = join(target, '.git', 'hooks');
+  mkdirSync(hooks, { recursive: true });
+  writeFileSync(join(hooks, 'pre-push'), '#!/bin/sh\ngit push --mirror backup\n');
+  const report = scan({ target, config: {} });
+  assert.equal(report.findings.some((f) => f.source === 'git-hook' && f.trigger === 'pre-push'), true);
 });
