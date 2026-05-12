@@ -1,0 +1,6 @@
+src/
+tests/
+fixtures/
+tmp/
+.github/
+docs/
