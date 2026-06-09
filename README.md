@@ -88,5 +88,18 @@ npm run release:check
 
 Use `npm pack --dry-run` to confirm the published package contains the CLI/runtime files plus README, license, security, support, and release notes.
 
+## Development
+
+Run the same checks maintainers use before opening a PR:
+
+```sh
+npm test
+npm run check
+npm run typecheck
+npm run build
+npm run smoke
+npm run package:smoke
+npm run release:check
+```
 ## License
 MIT
