@@ -4,7 +4,7 @@
   "description": "Local-first Git hook and package-script auditor for safer repo automation review.",
   "type": "module",
   "bin": {
-    "hookmark": "./dist/cli.js"
+    "hookmark": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -45,5 +45,13 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rogerchappel/hookmark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/hookmark/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/hookmark#readme"
 }
