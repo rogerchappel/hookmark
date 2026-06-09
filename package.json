@@ -4,7 +4,7 @@
   "description": "Local-first Git hook and package-script auditor for safer repo automation review.",
   "type": "module",
   "bin": {
-    "hookmark": "dist/cli.js"
+    "hookmark": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,7 +18,8 @@
     "dist",
     "README.md",
     "LICENSE",
-    "SECURITY.md"
+    "SECURITY.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/fix-bin-mode.mjs",
