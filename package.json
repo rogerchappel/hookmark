@@ -20,14 +20,17 @@
     "LICENSE",
     "SECURITY.md",
     "CHANGELOG.md",
-    "CONTRIBUTING.md"
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "SUPPORT.md",
+    "RELEASE_NOTES.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/fix-bin-mode.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node --test tests/*.test.js",
     "smoke": "npm run build && bash scripts/smoke.sh",
-    "package:smoke": "npm pack --dry-run",
+    "package:smoke": "npm run build && test -f dist/cli.js && test -f dist/index.js && npm pack --dry-run",
     "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
