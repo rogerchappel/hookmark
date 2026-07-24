@@ -14,10 +14,16 @@ export function parseArgs(argv: string[]): CliArgs {
     else if (arg === '--format') { const value = need(rest, ++i, arg); if (value !== 'json' && value !== 'markdown') throw new Error('--format must be json or markdown'); args.format = value; }
     else if (arg === '--fail-on') { const value = need(rest, ++i, arg); if (!isSeverity(value)) throw new Error('--fail-on must be info, low, medium, or high'); args.failOn = value; }
     else if (arg === '--config') args.config = need(rest, ++i, arg);
+    else if (arg.startsWith('-')) throw new Error(`Unknown option: ${arg}`);
     else positionals.push(arg);
   }
+  if (positionals.length > 1) throw new Error(`Unexpected positional argument: ${positionals[1]}`);
   if (positionals[0]) args.target = positionals[0];
   return args;
 }
-function need(args: string[], index: number, flag: string): string { if (!args[index]) throw new Error(`${flag} requires a value`); return args[index]; }
+function need(args: string[], index: number, flag: string): string {
+  const value = args[index];
+  if (!value || value.startsWith('--')) throw new Error(`${flag} requires a value`);
+  return value;
+}
 export function helpText(): string { return `HookMark - local hook and package-script auditor\n\nUsage:\n  hookmark scan <dir> [--out hooks.md] [--format markdown|json] [--fail-on high] [--config file]\n  hookmark explain <path-or-dir> [--format json|markdown]\n\nHookMark never executes discovered hooks or scripts.\n`; }
