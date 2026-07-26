@@ -44,13 +44,16 @@ test('native .git hooks ignore non-executable files', () => {
   assert.equal(report.findings.some((f) => f.source === 'git-hook' && f.trigger === 'pre-push'), false);
 });
 
-test('native .git hooks are discovered from a gitdir file worktree', () => {
+test('native .git hooks are discovered from a linked worktree common directory', () => {
   const target = mkdtempSync(join(tmpdir(), 'hookmark-git-worktree-'));
-  const gitDir = join(target, '..', 'common-git-dir');
-  const hooks = join(gitDir, 'hooks');
+  const commonDir = mkdtempSync(join(tmpdir(), 'hookmark-git-common-'));
+  const gitDir = join(commonDir, 'worktrees', 'linked');
+  const hooks = join(commonDir, 'hooks');
   const hook = join(hooks, 'pre-commit');
-  mkdirSync(hooks, { recursive: true });
+  mkdirSync(gitDir, { recursive: true });
+  mkdirSync(hooks);
   writeFileSync(join(target, '.git'), `gitdir: ${gitDir}\n`);
+  writeFileSync(join(gitDir, 'commondir'), '../..\n');
   writeFileSync(hook, '#!/bin/sh\nnpm test\n');
   chmodSync(hook, 0o755);
   const report = scan({ target, config: {} });
