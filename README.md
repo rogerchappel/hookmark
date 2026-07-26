@@ -14,7 +14,7 @@ node dist/cli.js explain package.json --format markdown
 
 ## What HookMark scans
 
-- `.git/hooks` executable hook files, excluding `*.sample`.
+- Executable native Git hooks from the repository's effective hooks directory (including the shared common directory used by linked worktrees), excluding `*.sample`.
 - `.husky/*` hook scripts.
 - `lefthook.yml` / `lefthook.yaml` `run:` commands.
 - `.pre-commit-config.yaml` `entry:` commands.
