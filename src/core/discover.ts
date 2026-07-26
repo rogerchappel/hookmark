@@ -83,11 +83,21 @@ function resolveGitDir(target: string): string | undefined {
   return isAbsolute(gitDir) ? gitDir : resolve(dirname(gitPath), gitDir);
 }
 
+function resolveCommonGitDir(gitDir: string): string {
+  const commonDirPath = join(gitDir, 'commondir');
+  if (!existsSync(commonDirPath)) return gitDir;
+
+  const commonDir = readFileSync(commonDirPath, 'utf8').trim();
+  if (!commonDir) return gitDir;
+
+  return isAbsolute(commonDir) ? commonDir : resolve(gitDir, commonDir);
+}
+
 function discoverGitHooks(target: string, out: DiscoveredCommand[]): void {
   const gitDir = resolveGitDir(target);
   if (!gitDir) return;
 
-  const hooksDir = join(gitDir, 'hooks');
+  const hooksDir = join(resolveCommonGitDir(gitDir), 'hooks');
   if (!existsSync(hooksDir)) return;
 
   for (const name of readdirSync(hooksDir)) {
