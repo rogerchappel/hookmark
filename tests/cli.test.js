@@ -28,3 +28,36 @@ test('documented option ordering remains valid', () => {
   assert.equal(JSON.parse(before.stdout).summary.total, 2);
   assert.equal(JSON.parse(after.stdout).summary.total, 2);
 });
+
+for (const command of ['scan', 'explain']) {
+  test(`${command} rejects a nonexistent target`, () => {
+    const result = runCli([command, 'fixtures/definitely-missing']);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, /hookmark: target is not a readable file or directory:/);
+  });
+}
+
+test('an explicit config must be a readable file', () => {
+  const missing = runCli(['scan', 'fixtures/risky', '--config', 'fixtures/missing-config.json']);
+  const directory = runCli(['scan', 'fixtures/risky', '--config', 'fixtures/safe']);
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, /hookmark: config is not a readable file:/);
+  assert.equal(directory.status, 1);
+  assert.match(directory.stderr, /hookmark: config is not a readable file:/);
+});
+
+test('file and directory targets remain valid', () => {
+  const directory = runCli(['scan', 'fixtures/safe', '--format', 'json']);
+  const file = runCli(['explain', 'fixtures/safe/package.json']);
+  assert.equal(directory.status, 0, directory.stderr);
+  assert.equal(file.status, 0, file.stderr);
+  assert.equal(JSON.parse(directory.stdout).summary.total, 2);
+  assert.equal(JSON.parse(file.stdout).summary.total, 2);
+});
+
+test('automatic config discovery uses a file target containing directory', () => {
+  const result = runCli(['explain', 'fixtures/risky/package.json']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(JSON.parse(result.stdout).configPath, /fixtures\/risky\/hookmark\.config\.json$/);
+});

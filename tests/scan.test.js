@@ -9,6 +9,16 @@ test('safe fixture discovers package scripts', () => {
   assert.equal(report.summary.total, 2);
   assert.equal(report.summary.maxSeverity, 'low');
 });
+test('public scan API rejects a missing target', () => {
+  assert.throws(
+    () => scan({ target: 'fixtures/definitely-missing', config: {} }),
+    /target is not a readable file or directory:/
+  );
+});
+test('public scan API accepts a file target by scanning its directory', () => {
+  const report = scan({ target: 'fixtures/safe/package.json', config: {} });
+  assert.equal(report.summary.total, 2);
+});
 test('risky fixture flags install and publish risk', () => {
   const report = scan({ target: 'fixtures/risky', config: {} });
   assert.equal(report.summary.counts.high >= 2, true);

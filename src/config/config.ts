@@ -1,19 +1,29 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import type { HookmarkConfig, Severity } from '../types.js';
 import { isSeverity } from '../core/severity.js';
 
 export const configNames = ['hookmark.config.json', '.hookmarkrc', '.hookmarkrc.json'];
 
 export function loadConfig(target: string, explicit?: string): { config: HookmarkConfig; path?: string } {
-  const candidates = explicit ? [explicit] : configNames.map((name) => join(target, name));
+  const candidates = explicit ? [resolve(explicit)] : configNames.map((name) => join(target, name));
   for (const path of candidates) {
     if (!existsSync(path)) continue;
+
+    if (explicit) {
+      try {
+        accessSync(path, constants.R_OK);
+        if (!statSync(path).isFile()) throw new Error();
+      } catch {
+        throw new Error(`config is not a readable file: ${path}`);
+      }
+    }
 
     const parsed = JSON.parse(readFileSync(path, 'utf8')) as HookmarkConfig;
     validateConfig(parsed, path);
     return { config: parsed, path };
   }
+  if (explicit) throw new Error(`config is not a readable file: ${resolve(explicit)}`);
   return { config: {} };
 }
 

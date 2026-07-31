@@ -1,9 +1,8 @@
-import { writeFileSync, statSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { parseArgs, helpText } from './args.js';
 import { loadConfig } from '../config/config.js';
-import { scan } from '../core/scanner.js';
+import { normalizeTarget, scan } from '../core/scanner.js';
 import { renderReport } from '../reporters/index.js';
 import { meetsSeverity } from '../core/severity.js';
 export async function run(argv = process.argv.slice(2)): Promise<number> {
@@ -20,5 +19,4 @@ export async function run(argv = process.argv.slice(2)): Promise<number> {
     return 0;
   } catch (error) { process.stderr.write(`hookmark: ${error instanceof Error ? error.message : String(error)}\n`); return 1; }
 }
-function normalizeTarget(input: string): string { const path = resolve(input); try { const st = statSync(path); return st.isFile() ? dirname(path) : path; } catch { return path; } }
 export const isMain = process.argv[1] === fileURLToPath(import.meta.url).replace(/\/src\/cli\/run\.ts$/, '/dist/cli/run.js');
