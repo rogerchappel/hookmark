@@ -47,6 +47,8 @@ Create `hookmark.config.json`, `.hookmarkrc`, or pass `--config`:
 
 `allow` and `ignore` match against path, trigger, and command text. `severityOverrides` can lower or raise a known pattern after human review.
 
+Automatic config discovery is optional. When `--config` is supplied explicitly, it must point to an existing, readable file; an invalid path exits with code `1` and a diagnostic instead of silently using an empty configuration.
+
 ## CLI
 
 ```sh
@@ -55,6 +57,7 @@ hookmark explain <path-or-dir> [--format json|markdown]
 ```
 
 `--fail-on` exits with code `2` when the maximum non-ignored severity meets or exceeds the threshold.
+Both commands require the target to be an existing, readable file or directory. Invalid or unsupported targets exit with code `1` and print a diagnostic to stderr; a file target scans its containing directory.
 
 ## Reports
 
