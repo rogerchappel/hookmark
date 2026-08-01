@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chmodSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { scan } from '../dist/index.js';
@@ -52,6 +53,25 @@ test('native .git hooks ignore non-executable files', () => {
   writeFileSync(join(hooks, 'pre-push'), '#!/bin/sh\ngit push --mirror backup\n');
   const report = scan({ target, config: {} });
   assert.equal(report.findings.some((f) => f.source === 'git-hook' && f.trigger === 'pre-push'), false);
+});
+
+test('native Git hooks honor a repository-relative core.hooksPath', () => {
+  const target = mkdtempSync(join(tmpdir(), 'hookmark-configured-hooks-'));
+  const hooks = join(target, '.githooks');
+  const hook = join(hooks, 'pre-push');
+  execFileSync('git', ['init', '--quiet', target]);
+  execFileSync('git', ['-C', target, 'config', 'core.hooksPath', '.githooks']);
+  mkdirSync(hooks);
+  writeFileSync(hook, '#!/bin/sh\nnpm publish\n');
+  writeFileSync(join(hooks, 'pre-commit'), '#!/bin/sh\nnpm test\n');
+  writeFileSync(join(hooks, 'commit-msg.sample'), '#!/bin/sh\nnpm publish\n');
+  chmodSync(hook, 0o755);
+  chmodSync(join(hooks, 'commit-msg.sample'), 0o755);
+
+  const report = scan({ target, config: {} });
+  const gitHooks = report.findings.filter((finding) => finding.source === 'git-hook');
+  assert.deepEqual(gitHooks.map((finding) => finding.trigger), ['pre-push']);
+  assert.equal(gitHooks[0]?.path, '.githooks/pre-push');
 });
 
 test('native .git hooks are discovered from a linked worktree common directory', () => {
