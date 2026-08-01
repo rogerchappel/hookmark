@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { isLifecycleScript } from './rules.js';
 import type { SourceType } from '../types.js';
@@ -93,11 +94,25 @@ function resolveCommonGitDir(gitDir: string): string {
   return isAbsolute(commonDir) ? commonDir : resolve(gitDir, commonDir);
 }
 
+function resolveHooksDir(target: string, gitDir: string): string {
+  const configured = spawnSync('git', ['-C', target, 'config', '--path', '--get', 'core.hooksPath'], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore']
+  });
+
+  if (configured.status === 0) {
+    const hooksPath = configured.stdout.trim();
+    if (hooksPath) return isAbsolute(hooksPath) ? hooksPath : resolve(target, hooksPath);
+  }
+
+  return join(resolveCommonGitDir(gitDir), 'hooks');
+}
+
 function discoverGitHooks(target: string, out: DiscoveredCommand[]): void {
   const gitDir = resolveGitDir(target);
   if (!gitDir) return;
 
-  const hooksDir = join(resolveCommonGitDir(gitDir), 'hooks');
+  const hooksDir = resolveHooksDir(target, gitDir);
   if (!existsSync(hooksDir)) return;
 
   for (const name of readdirSync(hooksDir)) {
