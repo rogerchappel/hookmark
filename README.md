@@ -14,7 +14,7 @@ node dist/cli.js explain package.json --format markdown
 
 ## What HookMark scans
 
-- Executable native Git hooks from the repository's effective hooks directory (including the shared common directory used by linked worktrees), excluding `*.sample`.
+- Executable native Git hooks from the repository's effective hooks directory. HookMark honors `core.hooksPath` (including repository-relative paths) and otherwise scans the shared common hooks directory used by linked worktrees. Non-executable hooks and `*.sample` files are excluded.
 - `.husky/*` hook scripts.
 - `lefthook.yml` / `lefthook.yaml` `run:` commands.
 - `.pre-commit-config.yaml` `entry:` commands.
@@ -75,7 +75,7 @@ The command should exit successfully, print the available options, and avoid rea
 
 ## Limitations
 
-HookMark is not malware detection, sandboxing, or a substitute for code review. Shell parsing is intentionally conservative; unusual quoting or generated scripts may need manual inspection. Always review high-severity findings before running install, commit, push, release, or deploy commands.
+HookMark is not malware detection, sandboxing, or a substitute for code review. Shell parsing is intentionally conservative; unusual quoting or generated scripts may need manual inspection. Resolving `core.hooksPath` requires Git to be installed; if Git cannot read the setting, HookMark falls back to the repository's ordinary hooks directory. Always review high-severity findings before running install, commit, push, release, or deploy commands.
 
 ## Verify
 
