@@ -99,7 +99,7 @@ npm run package:smoke
 npm run release:check
 ```
 
-Use `npm run package:smoke` to rebuild, assert the published CLI/runtime entrypoints exist, and confirm the tarball contains README, license, security, support, and release notes.
+Use `npm run package:smoke` to rebuild and pack into a disposable directory, verify the documented files and CLI/runtime entrypoints, install the tarball outside the checkout, and run the installed `hookmark --help` command.
 
 ## Development
 
