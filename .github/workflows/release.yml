@@ -37,10 +37,12 @@ jobs:
         run: node /tmp/releasebox/bin/releasebox.js check .
       - name: Run release checks
         run: npm run release:check
-      - name: Build package
-        run: npm pack
       - name: Generate release notes
         run: node /tmp/releasebox/bin/releasebox.js notes . > RELEASE_NOTES.md
+      - name: Build package
+        run: npm pack
+      - name: Verify packaged release notes
+        run: node scripts/assert-packaged-release-notes.mjs "$(find . -maxdepth 1 -name '*.tgz' -print -quit)" RELEASE_NOTES.md
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
