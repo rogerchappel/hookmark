@@ -30,6 +30,11 @@ try {
   }
 
   const tarball = join(smokeRoot, packed.filename);
+  execFileSync(
+    process.execPath,
+    ["scripts/assert-packaged-release-notes.mjs", tarball, "RELEASE_NOTES.md"],
+    { cwd: packageRoot, stdio: "inherit" },
+  );
   const installRoot = join(smokeRoot, "consumer");
   mkdirSync(installRoot);
   execFileSync("npm", ["install", "--ignore-scripts", tarball], {
