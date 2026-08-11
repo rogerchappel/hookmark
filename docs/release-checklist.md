@@ -11,6 +11,14 @@ Use this checklist before publishing hookmark.
 
 ## Package Contents
 
+Generate `RELEASE_NOTES.md` before running `npm pack`. After packing, verify that
+the release notes in the tarball are byte-for-byte identical to the file used
+as the GitHub release body:
+
+```sh
+node scripts/assert-packaged-release-notes.mjs ./hookmark-*.tgz RELEASE_NOTES.md
+```
+
 Confirm the package includes:
 
 - runtime CLI or library files
