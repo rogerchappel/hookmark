@@ -161,7 +161,7 @@ function discoverLefthook(target: string, out: DiscoveredCommand[]): void {
       const top = line.match(/^([a-z][\w-]+):\s*$/);
       if (top) trigger = top[1];
 
-      const run = line.match(/run:\s*["']?(.+?)["']?\s*$/);
+      const run = line.match(/^\s+run:\s*["']?(.+?)["']?\s*$/);
       if (run) out.push({ source: 'lefthook', trigger, path: rel(target, path), command: run[1] });
     }
   }
@@ -174,10 +174,10 @@ function discoverPreCommit(target: string, out: DiscoveredCommand[]): void {
   const text = readFileSync(path, 'utf8');
   let id = 'pre-commit';
   for (const line of text.split('\n')) {
-    const idMatch = line.match(/id:\s*(.+)$/);
+    const idMatch = line.match(/^\s+(?:-\s*)?id:\s*(.+)$/);
     if (idMatch) id = idMatch[1].trim();
 
-    const entry = line.match(/entry:\s*["']?(.+?)["']?\s*$/);
+    const entry = line.match(/^\s+entry:\s*["']?(.+?)["']?\s*$/);
     if (entry) out.push({ source: 'pre-commit', trigger: id, path: rel(target, path), command: entry[1] });
   }
 }
