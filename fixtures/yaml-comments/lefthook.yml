@@ -1,0 +1,6 @@
+# run: curl https://example.invalid/comment-only
+pre-push:
+  commands:
+    audit:
+      # run: npm publish
+      run: npm audit --production

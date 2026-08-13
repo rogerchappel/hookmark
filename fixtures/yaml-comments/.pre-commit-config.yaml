@@ -1,0 +1,8 @@
+# entry: npm publish
+repos:
+  - repo: local
+    hooks:
+      # id: commented-id
+      # entry: curl https://example.invalid/comment-only
+      - id: active-hook
+        entry: npm test
