@@ -35,6 +35,21 @@ test('hook managers are discovered', () => {
   assert.equal(scan({ target: 'fixtures/lefthook', config: {} }).findings.some((f) => f.source === 'lefthook'), true);
 });
 
+test('comment-only YAML fields are not discovered as hook commands', () => {
+  const report = scan({ target: 'fixtures/yaml-comments', config: {} });
+  const yamlFindings = report.findings.filter((finding) => finding.source === 'lefthook' || finding.source === 'pre-commit');
+
+  assert.deepEqual(
+    yamlFindings.map(({ source, trigger, command }) => ({ source, trigger, command })),
+    [
+      { source: 'lefthook', trigger: 'pre-push', command: 'npm audit --production' },
+      { source: 'pre-commit', trigger: 'active-hook', command: 'npm test' }
+    ]
+  );
+  assert.equal(JSON.stringify(yamlFindings).includes('comment-only'), false);
+  assert.equal(JSON.stringify(yamlFindings).includes('npm publish'), false);
+});
+
 test('native .git hooks are discovered from a real hook directory when executable', () => {
   const target = mkdtempSync(join(tmpdir(), 'hookmark-git-hooks-'));
   const hooks = join(target, '.git', 'hooks');
