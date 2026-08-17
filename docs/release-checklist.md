@@ -35,3 +35,32 @@ Confirm the package includes:
 - Release notes call out breaking changes or explicitly state that there are none.
 - Security and support docs give users a clear place to report issues.
 - CI is green on the release branch.
+
+## npm Publication
+
+Before pushing the release tag:
+
+- Set `package.json` to the release version and use the matching `v<version>` tag.
+- Configure `rogerchappel/hookmark`'s `release.yml` workflow as a trusted
+  publisher for the `hookmark` package on npm. The workflow uses GitHub OIDC;
+  it does not require an `NPM_TOKEN` secret.
+- Confirm the Release dry run workflow passes. It builds and verifies the
+  package, then runs `npm publish <tarball> --dry-run --access public` without
+  publishing.
+
+The tag-triggered workflow checks the tag against `package.json`, generates
+and verifies `RELEASE_NOTES.md`, and builds one tarball. Only after those checks
+pass does it run:
+
+```sh
+npm publish <tarball> --provenance --access public
+```
+
+The workflow attaches that same tarball to the GitHub release. Afterward,
+confirm both registries report the intended version and inspect npm's
+provenance link:
+
+```sh
+npm view hookmark version
+gh release view v<version>
+```

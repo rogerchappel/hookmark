@@ -7,6 +7,8 @@ on:
       - releasebox.config.json
       - package.json
       - package-lock.json
+      - scripts/assert-release-version.mjs
+      - tests/release-workflow.test.js
       - .github/workflows/release*.yml
 
 permissions:
@@ -39,9 +41,20 @@ jobs:
         run: node /tmp/releasebox/bin/releasebox.js check .
       - name: Run release checks
         run: npm run release:check
+      - name: Verify release version guard
+        run: node scripts/assert-release-version.mjs "v$(node -p 'require("./package.json").version')"
       - name: Release notes preview
         run: |
           node /tmp/releasebox/bin/releasebox.js notes . > release-notes-preview.md
           cat release-notes-preview.md
+      - name: Build and verify package
+        id: package
+        run: |
+          cp release-notes-preview.md RELEASE_NOTES.md
+          tarball="$(npm pack --silent)"
+          echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
+          node scripts/assert-packaged-release-notes.mjs "$tarball" RELEASE_NOTES.md
+      - name: Verify npm publish command
+        run: npm publish "${{ steps.package.outputs.tarball }}" --dry-run --access public
       - name: Publish release notes summary
         run: cat release-notes-preview.md >> "$GITHUB_STEP_SUMMARY"
