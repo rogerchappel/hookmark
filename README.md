@@ -45,7 +45,7 @@ Create `hookmark.config.json`, `.hookmarkrc`, or pass `--config`:
 }
 ```
 
-`allow` and `ignore` match against path, trigger, and command text. `severityOverrides` can lower or raise a known pattern after human review.
+`allow` and `ignore` must be arrays of patterns and match against path, trigger, and command text. Empty arrays are valid; non-array values are rejected with a config-path diagnostic. `severityOverrides` can lower or raise a known pattern after human review.
 
 Automatic config discovery is optional. When `--config` is supplied explicitly, it must point to an existing, readable file; an invalid path exits with code `1` and a diagnostic instead of silently using an empty configuration.
 
