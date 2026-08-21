@@ -29,7 +29,9 @@ export function loadConfig(target: string, explicit?: string): { config: Hookmar
 
 export function validateConfig(config: HookmarkConfig, path = 'config'): void {
   for (const key of ['allow', 'ignore'] as const) {
-    if (config[key] && !Array.isArray(config[key])) throw new Error(`${path}: ${key} must be an array`);
+    if (Object.hasOwn(config, key) && !Array.isArray(config[key])) {
+      throw new Error(`${path}: ${key} must be an array`);
+    }
   }
 
   if (config.severityOverrides) {
