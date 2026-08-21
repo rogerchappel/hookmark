@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 function runCli(args) {
   return spawnSync(process.execPath, ['dist/cli.js', ...args], { encoding: 'utf8' });
@@ -45,6 +48,21 @@ test('an explicit config must be a readable file', () => {
   assert.match(missing.stderr, /hookmark: config is not a readable file:/);
   assert.equal(directory.status, 1);
   assert.match(directory.stderr, /hookmark: config is not a readable file:/);
+});
+
+test('invalid config collection types produce a stable diagnostic', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'hookmark-config-'));
+  const config = join(directory, 'invalid.json');
+  try {
+    writeFileSync(config, JSON.stringify({ ignore: '' }));
+    const result = runCli(['scan', 'fixtures/safe', '--config', config, '--format', 'json']);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, new RegExp(`hookmark: ${config}: ignore must be an array`));
+    assert.doesNotMatch(result.stderr, /values\.some|TypeError/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test('file and directory targets remain valid', () => {
