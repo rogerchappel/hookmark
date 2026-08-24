@@ -38,3 +38,15 @@ test('empty allow and ignore arrays remain valid', () => {
   assert.doesNotThrow(() => validateConfig({ allow: [], ignore: [] }));
   assert.doesNotThrow(() => validateConfig({}));
 });
+
+test('config root must be a JSON object', () => {
+  for (const value of [null, [], ['ignore'], '', 'config', false, true, 0, 1]) {
+    assert.throws(
+      () => validateConfig(value, 'hookmark.config.json'),
+      /hookmark\.config\.json: config root must be a JSON object/
+    );
+  }
+
+  assert.doesNotThrow(() => validateConfig({}));
+  assert.doesNotThrow(() => validateConfig({ ignore: [], allow: [] }));
+});
