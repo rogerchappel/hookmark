@@ -19,7 +19,7 @@ export function loadConfig(target: string, explicit?: string): { config: Hookmar
       }
     }
 
-    const parsed = JSON.parse(readFileSync(path, 'utf8')) as HookmarkConfig;
+    const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
     validateConfig(parsed, path);
     return { config: parsed, path };
   }
@@ -27,15 +27,20 @@ export function loadConfig(target: string, explicit?: string): { config: Hookmar
   return { config: {} };
 }
 
-export function validateConfig(config: HookmarkConfig, path = 'config'): void {
+export function validateConfig(config: unknown, path = 'config'): asserts config is HookmarkConfig {
+  if (config === null || typeof config !== 'object' || Array.isArray(config)) {
+    throw new Error(`${path}: config root must be a JSON object`);
+  }
+  const validatedConfig = config as HookmarkConfig;
+
   for (const key of ['allow', 'ignore'] as const) {
-    if (Object.hasOwn(config, key) && !Array.isArray(config[key])) {
+    if (Object.hasOwn(validatedConfig, key) && !Array.isArray(validatedConfig[key])) {
       throw new Error(`${path}: ${key} must be an array`);
     }
   }
 
-  if (config.severityOverrides) {
-    for (const [pattern, severity] of Object.entries(config.severityOverrides)) {
+  if (validatedConfig.severityOverrides) {
+    for (const [pattern, severity] of Object.entries(validatedConfig.severityOverrides)) {
       if (!pattern) throw new Error(`${path}: severity override pattern cannot be empty`);
       if (!isSeverity(severity as Severity)) throw new Error(`${path}: invalid severity ${severity}`);
     }
