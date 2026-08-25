@@ -44,7 +44,14 @@ export function validateConfig(config: unknown, path = 'config'): asserts config
     }
   }
 
-  if (validatedConfig.severityOverrides) {
+  if (Object.hasOwn(validatedConfig, 'severityOverrides')) {
+    if (
+      validatedConfig.severityOverrides === null
+      || typeof validatedConfig.severityOverrides !== 'object'
+      || Array.isArray(validatedConfig.severityOverrides)
+    ) {
+      throw new Error(`${path}: severityOverrides must be an object`);
+    }
     for (const [pattern, severity] of Object.entries(validatedConfig.severityOverrides)) {
       if (!pattern) throw new Error(`${path}: severity override pattern cannot be empty`);
       if (!isSeverity(severity as Severity)) throw new Error(`${path}: invalid severity ${severity}`);
