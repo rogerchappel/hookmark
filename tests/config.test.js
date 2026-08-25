@@ -1,5 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { loadConfig, validateConfig } from '../dist/index.js';
 
 test('explicit config paths must name an existing file', () => {
@@ -65,4 +69,30 @@ test('config root must be a JSON object', () => {
 
   assert.doesNotThrow(() => validateConfig({}));
   assert.doesNotThrow(() => validateConfig({ ignore: [], allow: [] }));
+});
+
+test('severity overrides require an object mapping', () => {
+  for (const value of [null, [], 'high', 1]) {
+    assert.throws(
+      () => validateConfig({ severityOverrides: value }, 'settings.json'),
+      /settings\.json: severityOverrides must be an object/,
+    );
+  }
+});
+
+test('severity overrides accept empty and valid mappings', () => {
+  assert.doesNotThrow(() => validateConfig({ severityOverrides: {} }));
+  assert.doesNotThrow(() => validateConfig({ severityOverrides: { publish: 'high', test: 'info' } }));
+});
+
+test('CLI rejects invalid severity override shapes with the config path', () => {
+  const root = mkdtempSync(join(tmpdir(), 'hookmark-config-'));
+
+  for (const [name, value] of [['null', null], ['array', []]]) {
+    const config = join(root, `${name}.json`);
+    writeFileSync(config, JSON.stringify({ severityOverrides: value }));
+    const result = spawnSync(process.execPath, ['dist/cli.js', 'scan', 'fixtures/safe', '--config', config], { encoding: 'utf8' });
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(result.stderr, new RegExp(`${config}: severityOverrides must be an object`));
+  }
 });
