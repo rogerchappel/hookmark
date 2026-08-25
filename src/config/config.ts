@@ -37,6 +37,11 @@ export function validateConfig(config: unknown, path = 'config'): asserts config
     if (Object.hasOwn(validatedConfig, key) && !Array.isArray(validatedConfig[key])) {
       throw new Error(`${path}: ${key} must be an array`);
     }
+    for (const [index, value] of (validatedConfig[key] ?? []).entries()) {
+      if (typeof value !== 'string') {
+        throw new Error(`${path}: ${key}[${index}] must be a string`);
+      }
+    }
   }
 
   if (validatedConfig.severityOverrides) {
