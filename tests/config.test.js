@@ -39,6 +39,22 @@ test('empty allow and ignore arrays remain valid', () => {
   assert.doesNotThrow(() => validateConfig({}));
 });
 
+test('allow and ignore entries must be strings', () => {
+  for (const key of ['allow', 'ignore']) {
+    for (const [index, value] of [{}, 1, true, null].entries()) {
+      assert.throws(
+        () => validateConfig({ [key]: ['valid pattern', value] }, 'hookmark.config.json'),
+        new RegExp(`hookmark\\.config\\.json: ${key}\\[1\\] must be a string`),
+        `${key} accepted invalid entry ${index}`
+      );
+    }
+  }
+});
+
+test('string allow and ignore patterns remain valid', () => {
+  assert.doesNotThrow(() => validateConfig({ allow: ['package.json test'], ignore: ['^npm run'] }));
+});
+
 test('config root must be a JSON object', () => {
   for (const value of [null, [], ['ignore'], '', 'config', false, true, 0, 1]) {
     assert.throws(
