@@ -65,6 +65,25 @@ test('invalid config collection types produce a stable diagnostic', () => {
   }
 });
 
+test('non-string config collection entries produce indexed diagnostics', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'hookmark-config-entry-'));
+  const config = join(directory, 'invalid.json');
+  try {
+    for (const key of ['allow', 'ignore']) {
+      for (const value of [{ pattern: 'node' }, 1, true, null]) {
+        writeFileSync(config, JSON.stringify({ [key]: ['valid', value] }));
+        const result = runCli(['scan', 'fixtures/safe', '--config', config, '--format', 'json']);
+        assert.equal(result.status, 1);
+        assert.equal(result.stdout, '');
+        assert.match(result.stderr, new RegExp(`hookmark: ${config}: ${key}\\[1\\] must be a string`));
+        assert.doesNotMatch(result.stderr, /TypeError|\\n\\s+at /);
+      }
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('file and directory targets remain valid', () => {
   const directory = runCli(['scan', 'fixtures/safe', '--format', 'json']);
   const file = runCli(['explain', 'fixtures/safe/package.json']);
