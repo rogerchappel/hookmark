@@ -1,32 +1,72 @@
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import test from "node:test";
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { parse } from 'yaml';
 
-const release = readFileSync(".github/workflows/release.yml", "utf8");
-const dryRun = readFileSync(".github/workflows/release-dry-run.yml", "utf8");
+const workflowUrl = new URL('../.github/workflows/release.yml', import.meta.url);
 
-test("release verifies and publishes the same tarball before attaching it", () => {
-  const steps = [
-    "Verify release version",
-    "Generate release notes",
-    "Build package",
-    "Verify packaged release notes",
-    "Publish package to npm",
-    "Create GitHub release",
-  ];
+async function loadReleaseWorkflow() {
+  return parse(await readFile(workflowUrl, 'utf8'));
+}
 
-  let previous = -1;
-  for (const step of steps) {
-    const position = release.indexOf(`- name: ${step}`);
-    assert(position > previous, `${step} must follow the preceding release step`);
-    previous = position;
-  }
-
-  assert.match(release, /npm publish "\$\{\{ steps\.package\.outputs\.tarball \}\}" --provenance --access public/);
-  assert.match(release, /gh release create[^\n]+"\$\{\{ steps\.package\.outputs\.tarball \}\}"/);
+test('release workflow splits prepare and publish with least-privilege job permissions', async () => {
+  const workflow = await loadReleaseWorkflow();
+  assert.equal(
+    workflow.permissions,
+    undefined,
+    'no workflow-level permissions block may remain; permissions must be job-scoped'
+  );
+  assert.deepEqual(Object.keys(workflow.jobs), ['prepare', 'publish']);
+  assert.deepEqual(workflow.jobs.prepare.permissions, { contents: 'read' });
+  assert.deepEqual(workflow.jobs.publish.permissions, {
+    contents: 'write',
+    'id-token': 'write',
+  });
+  assert.equal(workflow.jobs.publish.needs, 'prepare');
 });
 
-test("dry run exercises package verification and npm publish arguments", () => {
-  assert.match(dryRun, /assert-packaged-release-notes\.mjs "\$tarball" RELEASE_NOTES\.md/);
-  assert.match(dryRun, /npm publish "\$\{\{ steps\.package\.outputs\.tarball \}\}" --dry-run --access public/);
+test('prepare job builds and preserves verified assets without publish permission', async () => {
+  const workflow = await loadReleaseWorkflow();
+  const prepare = workflow.jobs.prepare;
+  assert.equal(prepare.permissions.contents, 'read');
+  assert.equal(prepare.needs, undefined, 'prepare must not depend on publish');
+  assert.ok(
+    prepare.steps.some((step) => step.name === 'Build package' && step.run === 'npm pack'),
+    'prepare must build the tarball with npm pack'
+  );
+  assert.ok(
+    prepare.steps.some(
+      (step) => step.name === 'Preserve verified release assets' && step.uses === 'actions/upload-artifact@v4'
+    ),
+    'prepare must upload the verified tarball and release notes'
+  );
+  const runs = prepare.steps.filter((step) => typeof step.run === 'string').map((step) => step.run);
+  assert.ok(
+    !runs.some((run) => run.includes('npm publish') || run.includes('gh release create')),
+    'prepare must not publish or create releases'
+  );
+});
+
+test('publish job restores artifacts before npm publish and creates the GitHub release last', async () => {
+  const workflow = await loadReleaseWorkflow();
+  const publish = workflow.jobs.publish;
+  const steps = publish.steps.map((step, index) => ({
+    index,
+    run: step.run ?? '',
+    name: step.name ?? '',
+    uses: step.uses ?? '',
+  }));
+  const restore = steps.findIndex((step) => step.uses === 'actions/download-artifact@v4');
+  const npmPublish = steps.findIndex((step) => step.run.includes('npm publish'));
+  const createRelease = steps.findIndex((step) => step.run.includes('gh release create'));
+  assert.ok(restore !== -1, 'publish must restore the verified release assets artifact');
+  assert.ok(
+    npmPublish !== -1 && steps[npmPublish].run === 'npm publish ./*.tgz --access public --provenance',
+    'publish must publish the verified tarball with provenance'
+  );
+  assert.ok(createRelease !== -1, 'publish must create the GitHub release');
+  assert.ok(
+    restore < npmPublish && npmPublish < createRelease,
+    'ordering must be restore -> npm publish -> GitHub release'
+  );
 });

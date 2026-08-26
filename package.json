@@ -47,7 +47,8 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "yaml": "^2.9.0"
   },
   "engines": {
     "node": ">=20"
