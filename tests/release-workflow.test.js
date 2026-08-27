@@ -37,7 +37,11 @@ test('prepare job verifies the tag and preserves only the matching package and n
   const verify = steps.findIndex((step) => step.run?.includes('assert-packaged-release-notes.mjs'));
   const upload = steps.findIndex((step) => step.uses === 'actions/upload-artifact@v4');
   assert.ok(tagGuard !== -1, 'prepare must verify GITHUB_REF_NAME against package.json');
-  assert.ok(notes < pack && pack < verify && verify < upload, 'ordering must be notes -> pack -> verify -> upload');
+  assert.ok(notes < pack && pack === verify && verify < upload, 'ordering must be notes -> package verification -> upload');
+  assert.ok(
+    steps[pack].run.indexOf('npm pack --silent') < steps[pack].run.indexOf('assert-packaged-release-notes.mjs'),
+    'the exact tarball must be packed before its release notes are verified'
+  );
   assert.equal(steps[pack].id, 'package', 'the package step must expose the exact tarball path');
   assert.equal(
     steps[upload].with.path,
