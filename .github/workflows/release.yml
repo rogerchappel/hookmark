@@ -35,16 +35,22 @@ jobs:
         run: node /tmp/releasebox/bin/releasebox.js check .
       - name: Run release checks
         run: npm run release:check
-      - name: Build package
-        run: npm pack
+      - name: Verify release tag
+        run: node scripts/assert-release-version.mjs "$GITHUB_REF_NAME"
       - name: Generate release notes
         run: node /tmp/releasebox/bin/releasebox.js notes . > RELEASE_NOTES.md
+      - name: Build and verify package
+        id: package
+        run: |
+          tarball="$(npm pack --silent)"
+          echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
+          node scripts/assert-packaged-release-notes.mjs "$tarball" RELEASE_NOTES.md
       - name: Preserve verified release assets
         uses: actions/upload-artifact@v4
         with:
           name: release-assets
           path: |
-            *.tgz
+            ${{ steps.package.outputs.tarball }}
             RELEASE_NOTES.md
           if-no-files-found: error
 
