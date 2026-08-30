@@ -18,7 +18,7 @@ node dist/cli.js explain package.json --format markdown
 - `.husky/*` hook scripts.
 - `lefthook.yml` / `lefthook.yaml` indented `run:` fields.
 - `.pre-commit-config.yaml` indented `entry:` fields, associated with the nearest preceding indented `id:` field.
-- `package.json` scripts, with npm lifecycle names highlighted.
+- `package.json` scripts, with npm lifecycle names and defined `pre<name>` / `post<name>` companions highlighted. For example, when `build` exists, npm automatically runs defined `prebuild` and `postbuild` scripts around `npm run build`; `build` itself remains an ordinary, explicit package script.
 
 ## Safety model
 
@@ -27,7 +27,7 @@ HookMark is deterministic and offline. It tokenizes shell-like commands conserva
 Severity categories include:
 
 - **high**: credential access, publishing, deploys, dangerous deletes, install-time lifecycle scripts.
-- **medium**: network-capable commands, remote URLs, implicit hook triggers.
+- **medium**: network-capable commands, remote URLs, implicit hook and npm lifecycle triggers.
 - **low**: filesystem writes or process spawning.
 - **info**: discovered automation with no risky pattern match, or ignored by config.
 
