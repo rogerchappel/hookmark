@@ -145,8 +145,10 @@ function discoverPackage(target: string, out: DiscoveredCommand[]): void {
   if (!existsSync(path)) return;
 
   const pkg = JSON.parse(readFileSync(path, 'utf8')) as { scripts?: Record<string, string> };
-  for (const [name, command] of Object.entries(pkg.scripts ?? {})) {
-    out.push({ source: isLifecycleScript(name) ? 'npm-lifecycle' : 'package-script', trigger: name, path: rel(target, path), command });
+  const scripts = pkg.scripts ?? {};
+  const scriptNames = Object.keys(scripts);
+  for (const [name, command] of Object.entries(scripts)) {
+    out.push({ source: isLifecycleScript(name, scriptNames) ? 'npm-lifecycle' : 'package-script', trigger: name, path: rel(target, path), command });
   }
 }
 

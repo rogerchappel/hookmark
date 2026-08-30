@@ -23,7 +23,12 @@ export function classifyCommand(input: { source: SourceType; trigger: string; pa
   if (spawn.test(command)) add('process-spawn', 'low', 'Command starts another interpreter or process runner.');
   if (dangerousDelete.test(command)) add('dangerous-delete', 'high', 'Delete command has broad or variable target.');
   if (input.source === 'npm-lifecycle' && lifecycleHigh.has(input.trigger)) add('install-time', 'high', 'NPM lifecycle script can run during install or publish preparation.');
-  if (input.source !== 'package-script' && input.source !== 'file') add('implicit-trigger', 'medium', 'Hook can run implicitly from Git or a hook manager.');
+  if (input.source !== 'package-script' && input.source !== 'file') {
+    const why = input.source === 'npm-lifecycle'
+      ? 'NPM can invoke this lifecycle or companion script automatically.'
+      : 'Hook can run implicitly from Git or a hook manager.';
+    add('implicit-trigger', 'medium', why);
+  }
   const tokens = tokenize(command);
   if (tokens.some((token) => token.startsWith('http://') || token.startsWith('https://'))) add('remote-url', 'medium', 'Command includes a remote URL.');
   let severity = input.override ?? maxSeverity(severities);
@@ -37,6 +42,8 @@ function actionFor(severity: Severity, ignored?: boolean): string {
   if (severity === 'low') return 'Usually safe, but note local mutation or process spawning.';
   return 'Documented for awareness.';
 }
-export function isLifecycleScript(name: string): boolean {
-  return /^(pre|post)(install|publish|pack|version|test)$/.test(name) || lifecycleHigh.has(name);
+export function isLifecycleScript(name: string, scriptNames: readonly string[] = []): boolean {
+  if (/^(pre|post)(install|publish|pack|version|test)$/.test(name) || lifecycleHigh.has(name)) return true;
+  const companion = name.match(/^(pre|post)(.+)$/)?.[2];
+  return companion !== undefined && scriptNames.includes(companion);
 }

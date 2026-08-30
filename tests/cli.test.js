@@ -32,6 +32,18 @@ test('documented option ordering remains valid', () => {
   assert.equal(JSON.parse(after.stdout).summary.total, 2);
 });
 
+test('npm lifecycle companions participate in --fail-on severity', () => {
+  const medium = runCli(['scan', 'fixtures/lifecycle-companions', '--format', 'json', '--fail-on', 'medium']);
+  const high = runCli(['scan', 'fixtures/lifecycle-companions', '--format', 'json', '--fail-on', 'high']);
+
+  assert.equal(medium.status, 2, medium.stderr);
+  assert.equal(JSON.parse(medium.stdout).summary.maxSeverity, 'medium');
+  assert.equal(high.status, 0, high.stderr);
+  const findings = JSON.parse(medium.stdout).findings;
+  assert.equal(findings.find((finding) => finding.trigger === 'prebuild')?.severity, 'medium');
+  assert.equal(findings.find((finding) => finding.trigger === 'build')?.severity, 'info');
+});
+
 for (const command of ['scan', 'explain']) {
   test(`${command} rejects a nonexistent target`, () => {
     const result = runCli([command, 'fixtures/definitely-missing']);
