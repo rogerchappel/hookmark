@@ -25,6 +25,19 @@ test('risky fixture flags install and publish risk', () => {
   assert.equal(report.summary.counts.high >= 2, true);
   assert.match(JSON.stringify(report.findings), /install-time|publish/);
 });
+test('npm pre/post companions are implicit but their ordinary script is not', () => {
+  const report = scan({ target: 'fixtures/lifecycle-companions', config: {} });
+  const byTrigger = Object.fromEntries(report.findings.map((finding) => [finding.trigger, finding]));
+
+  for (const trigger of ['prebuild', 'postbuild']) {
+    assert.equal(byTrigger[trigger]?.source, 'npm-lifecycle');
+    assert.equal(byTrigger[trigger]?.severity, 'medium');
+    assert.deepEqual(byTrigger[trigger]?.categories, ['implicit-trigger']);
+  }
+  assert.equal(byTrigger.build?.source, 'package-script');
+  assert.equal(byTrigger.build?.severity, 'info');
+  assert.deepEqual(byTrigger.build?.categories, []);
+});
 test('configuration can ignore trusted commands and override severity', () => {
   const report = scan({ target: 'fixtures/risky', config: { ignore: ['release'], severityOverrides: { clean: 'medium' } } });
   assert.equal(report.findings.find((f) => f.trigger === 'release')?.ignored, true);

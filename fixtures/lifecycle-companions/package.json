@@ -1,0 +1,1 @@
+{"scripts":{"prebuild":"echo before","build":"echo build","postbuild":"echo after"}}
