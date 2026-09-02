@@ -144,11 +144,17 @@ function discoverPackage(target: string, out: DiscoveredCommand[]): void {
   const path = join(target, 'package.json');
   if (!existsSync(path)) return;
 
-  const pkg = JSON.parse(readFileSync(path, 'utf8')) as { scripts?: Record<string, string> };
-  const scripts = pkg.scripts ?? {};
+  const pkg = JSON.parse(readFileSync(path, 'utf8')) as { scripts?: unknown };
+  const scripts = pkg.scripts === undefined ? {} : pkg.scripts;
+  if (scripts === null || typeof scripts !== 'object' || Array.isArray(scripts)) {
+    throw new Error(`${path}: scripts must be an object`);
+  }
+  for (const [name, command] of Object.entries(scripts)) {
+    if (typeof command !== 'string') throw new Error(`${path}: scripts.${name} must be a string`);
+  }
   const scriptNames = Object.keys(scripts);
   for (const [name, command] of Object.entries(scripts)) {
-    out.push({ source: isLifecycleScript(name, scriptNames) ? 'npm-lifecycle' : 'package-script', trigger: name, path: rel(target, path), command });
+    out.push({ source: isLifecycleScript(name, scriptNames) ? 'npm-lifecycle' : 'package-script', trigger: name, path: rel(target, path), command: command as string });
   }
 }
 
