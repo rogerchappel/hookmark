@@ -20,6 +20,35 @@ test('public scan API accepts a file target by scanning its directory', () => {
   const report = scan({ target: 'fixtures/safe/package.json', config: {} });
   assert.equal(report.summary.total, 2);
 });
+test('public scan API rejects malformed package script collections', () => {
+  const target = mkdtempSync(join(tmpdir(), 'hookmark-package-scripts-'));
+  for (const scripts of [null, [], 'npm test']) {
+    writeFileSync(join(target, 'package.json'), JSON.stringify({ scripts }));
+    assert.throws(
+      () => scan({ target, config: {} }),
+      new RegExp(`${target}/package\\.json: scripts must be an object`)
+    );
+  }
+});
+
+test('public scan API rejects non-string package script commands', () => {
+  const target = mkdtempSync(join(tmpdir(), 'hookmark-package-script-command-'));
+  for (const command of [42, null]) {
+    writeFileSync(join(target, 'package.json'), JSON.stringify({ scripts: { build: command } }));
+    assert.throws(
+      () => scan({ target, config: {} }),
+      new RegExp(`${target}/package\\.json: scripts\\.build must be a string`)
+    );
+  }
+});
+
+test('public scan API accepts absent and string-valued package scripts', () => {
+  const target = mkdtempSync(join(tmpdir(), 'hookmark-valid-package-scripts-'));
+  writeFileSync(join(target, 'package.json'), JSON.stringify({ name: 'empty' }));
+  assert.equal(scan({ target, config: {} }).summary.total, 0);
+  writeFileSync(join(target, 'package.json'), JSON.stringify({ scripts: { test: 'node --test' } }));
+  assert.equal(scan({ target, config: {} }).findings[0]?.command, 'node --test');
+});
 test('risky fixture flags install and publish risk', () => {
   const report = scan({ target: 'fixtures/risky', config: {} });
   assert.equal(report.summary.counts.high >= 2, true);

@@ -105,6 +105,30 @@ test('file and directory targets remain valid', () => {
   assert.equal(JSON.parse(file.stdout).summary.total, 2);
 });
 
+test('malformed package scripts produce field-specific CLI diagnostics', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'hookmark-package-scripts-cli-'));
+  const packageFile = join(directory, 'package.json');
+  try {
+    for (const scripts of [null, [], 'npm test']) {
+      writeFileSync(packageFile, JSON.stringify({ scripts }));
+      const result = runCli(['scan', directory, '--format', 'json']);
+      assert.equal(result.status, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, new RegExp(`hookmark: ${packageFile}: scripts must be an object`));
+      assert.doesNotMatch(result.stderr, /TypeError|\\n\\s+at /);
+    }
+    for (const command of [42, null]) {
+      writeFileSync(packageFile, JSON.stringify({ scripts: { build: command } }));
+      const result = runCli(['scan', directory, '--format', 'json']);
+      assert.equal(result.status, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, new RegExp(`hookmark: ${packageFile}: scripts\\.build must be a string`));
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('automatic config discovery uses a file target containing directory', () => {
   const result = runCli(['explain', 'fixtures/risky/package.json']);
   assert.equal(result.status, 0, result.stderr);
