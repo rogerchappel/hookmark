@@ -6,6 +6,7 @@ All notable changes to HookMark will be documented here.
 
 ### Changed
 
+- Reject duplicate singleton CLI options and option-like values before performing report or config side effects.
 - Split the tag-triggered release workflow into least-privilege `prepare` (contents: read) and `publish` (contents: write, id-token: write) jobs that hand off verified tarball and release-notes artifacts, so checkout, install, and release checks no longer run with write or OIDC token permissions.
 
 ### Added

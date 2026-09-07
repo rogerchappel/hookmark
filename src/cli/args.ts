@@ -8,12 +8,13 @@ export function parseArgs(argv: string[]): CliArgs {
   if (commandRaw !== 'scan' && commandRaw !== 'explain') throw new Error(`Unknown command: ${commandRaw}`);
   const args: CliArgs = { command: commandRaw, target: '.', format: commandRaw === 'explain' ? 'json' : 'markdown' };
   const positionals: string[] = [];
+  const seenOptions = new Set<string>();
   for (let i = 0; i < rest.length; i++) {
     const arg = rest[i];
-    if (arg === '--out') args.out = need(rest, ++i, arg);
-    else if (arg === '--format') { const value = need(rest, ++i, arg); if (value !== 'json' && value !== 'markdown') throw new Error('--format must be json or markdown'); args.format = value; }
-    else if (arg === '--fail-on') { const value = need(rest, ++i, arg); if (!isSeverity(value)) throw new Error('--fail-on must be info, low, medium, or high'); args.failOn = value; }
-    else if (arg === '--config') args.config = need(rest, ++i, arg);
+    if (arg === '--out') { once(seenOptions, arg); args.out = need(rest, ++i, arg); }
+    else if (arg === '--format') { once(seenOptions, arg); const value = need(rest, ++i, arg); if (value !== 'json' && value !== 'markdown') throw new Error('--format must be json or markdown'); args.format = value; }
+    else if (arg === '--fail-on') { once(seenOptions, arg); const value = need(rest, ++i, arg); if (!isSeverity(value)) throw new Error('--fail-on must be info, low, medium, or high'); args.failOn = value; }
+    else if (arg === '--config') { once(seenOptions, arg); args.config = need(rest, ++i, arg); }
     else if (arg.startsWith('-')) throw new Error(`Unknown option: ${arg}`);
     else positionals.push(arg);
   }
@@ -23,7 +24,11 @@ export function parseArgs(argv: string[]): CliArgs {
 }
 function need(args: string[], index: number, flag: string): string {
   const value = args[index];
-  if (!value || value.startsWith('--')) throw new Error(`${flag} requires a value`);
+  if (!value || value.startsWith('-')) throw new Error(`${flag} requires a value`);
   return value;
+}
+function once(seen: Set<string>, flag: string): void {
+  if (seen.has(flag)) throw new Error(`${flag} may only be specified once`);
+  seen.add(flag);
 }
 export function helpText(): string { return `HookMark - local hook and package-script auditor\n\nUsage:\n  hookmark scan <dir> [--out hooks.md] [--format markdown|json] [--fail-on high] [--config file]\n  hookmark explain <path-or-dir> [--format json|markdown]\n\nHookMark never executes discovered hooks or scripts.\n`; }

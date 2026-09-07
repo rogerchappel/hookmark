@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -31,6 +31,31 @@ test('documented option ordering remains valid', () => {
   assert.equal(JSON.parse(before.stdout).summary.total, 2);
   assert.equal(JSON.parse(after.stdout).summary.total, 2);
 });
+
+test('option-like output values fail without creating a report', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'hookmark-cli-value-'));
+  try {
+    const result = spawnSync(process.execPath, [join(process.cwd(), 'dist/cli.js'), 'scan', 'fixtures/safe', '--out', '-x'], {
+      cwd: directory,
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /hookmark: --out requires a value/);
+    assert.equal(result.stdout, '');
+    assert.throws(() => readFileSync(join(directory, '-x')));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+for (const [flag, value] of [['--out', 'report.md'], ['--format', 'json'], ['--fail-on', 'high'], ['--config', 'hookmark.config.json']]) {
+  test(`${flag} duplicate produces a diagnostic and nonzero exit`, () => {
+    const result = runCli(['scan', 'fixtures/safe', flag, value, flag, value]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, new RegExp(`hookmark: ${flag} may only be specified once`));
+  });
+}
 
 test('npm lifecycle companions participate in --fail-on severity', () => {
   const medium = runCli(['scan', 'fixtures/lifecycle-companions', '--format', 'json', '--fail-on', 'medium']);
