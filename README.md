@@ -57,6 +57,7 @@ hookmark explain <path-or-dir> [--format json|markdown]
 ```
 
 `--fail-on` exits with code `2` when the maximum non-ignored severity meets or exceeds the threshold.
+Each value-taking option (`--out`, `--format`, `--fail-on`, and `--config`) may be supplied only once and requires a value that does not begin with `-`. Duplicate options and missing or option-like values exit with code `1` before scanning, reading a config, or writing a report.
 Both commands require the target to be an existing, readable file or directory. Invalid or unsupported targets exit with code `1` and print a diagnostic to stderr; a file target scans its containing directory.
 When `package.json` contains `scripts`, it must be an object whose command values are strings. Malformed script collections or commands exit with code `1` and identify the manifest and offending field instead of producing a partial report.
 
