@@ -36,4 +36,16 @@ for (const flag of ['--out', '--format', '--fail-on', '--config']) {
       new RegExp(`${flag} requires a value`),
     );
   });
+
+  test(`${flag} rejects an option-like value`, () => {
+    assert.throws(() => parseArgs(['scan', flag, '-x']), new RegExp(`${flag} requires a value`));
+  });
+
+  test(`${flag} rejects duplicate occurrences`, () => {
+    const value = flag === '--format' ? 'json' : flag === '--fail-on' ? 'high' : 'value';
+    assert.throws(
+      () => parseArgs(['scan', flag, value, flag, value]),
+      new RegExp(`${flag} may only be specified once`),
+    );
+  });
 }
