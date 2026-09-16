@@ -46,7 +46,7 @@
   "author": "Roger Chappel",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "latest",
+    "@types/node": "^22.20.3",
     "typescript": "latest",
     "yaml": "^2.9.0"
   },
