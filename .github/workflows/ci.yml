@@ -63,4 +63,7 @@ jobs:
             npm install
           fi
 
-          npm run release:check
+          npm run check
+          npm test
+          npm run smoke
+          npm run package:smoke
